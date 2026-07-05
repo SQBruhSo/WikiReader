@@ -106,30 +106,66 @@
         button:hover { opacity: 0.9; }
         .secondary-btn { background: var(--border-color); color: var(--text-color); }
 
-        /* Lista de resultados encontrados sugeridos */
-        .results-list {
+        /* Panel de opciones con tarjetas visuales */
+        .results-grid {
             display: grid;
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
             margin-bottom: 2rem;
             background: rgba(0,0,0,0.02);
-            padding: 1rem;
-            border-radius: 14px;
+            padding: 1.2rem;
+            border-radius: 16px;
             border: 1px dashed var(--border-color);
         }
 
-        .result-item {
-            padding: 0.8rem 1.2rem;
+        .result-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 14px;
+            overflow: hidden;
             cursor: pointer;
-            font-weight: 500;
+            display: flex;
+            flex-direction: column;
             text-align: left;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            transition: transform 0.2s, border-color 0.2s;
         }
 
-        .result-item:hover {
+        .result-card:hover {
+            transform: translateY(-2px);
             border-color: var(--accent-color);
-            background: rgba(0, 113, 227, 0.05);
+            box-shadow: 0 6px 15px rgba(0, 113, 227, 0.1);
+        }
+
+        .result-thumb {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .result-info {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-grow: 1;
+        }
+
+        .result-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .result-desc {
+            font-size: 0.85rem;
+            color: #6e6e73;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .toolbar {
@@ -174,9 +210,9 @@
         <!-- Buscador e Idiomas -->
         <div class="search-box">
             <select id="language-select">
-                <!-- Se inyectarán los 60 idiomas vía JS para mantener el código limpio -->
+                <!-- Idiomas cargados dinámicamente -->
             </select>
-            <input type="text" id="search-input" placeholder="Busca cualquier término..." value="Limon">
+            <input type="text" id="search-input" placeholder="Escribe tu búsqueda aquí..." value="Limon">
             <button onclick="searchWikiOptions()"><i data-lucide="search"></i> Buscar</button>
             <button class="secondary-btn" onclick="toggleTheme()"><i data-lucide="moon"></i></button>
         </div>
@@ -188,10 +224,10 @@
             Este proyecto <strong>no está financiado, no recibe donaciones y no genera ningún tipo de ingresos</strong>. Ha sido creado únicamente por amor al diseño, con el objetivo de ofrecer a los usuarios una interfaz mucho más limpia, moderna, cómoda y optimizada para la lectura y la investigación personal sin distracciones.
         </div>
 
-        <!-- Panel de Elección de Artículos -->
+        <!-- Panel de Opciones de Artículos Avanzado con Tarjetas Visuales -->
         <div id="options-panel" style="display: none; margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem; opacity: 0.8;">Artículos encontrados. Elige cuál deseas leer:</h3>
-            <div id="results-container" class="results-list"></div>
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem; opacity: 0.8; font-weight: 600;">Resultados encontrados. Elige el artículo exacto:</h3>
+            <div id="results-container" class="results-grid"></div>
         </div>
 
         <!-- Barra de herramientas -->
@@ -205,7 +241,7 @@
         <div id="capture-zone" style="background: transparent; padding: 10px;">
             <article class="article-area" id="content-area">
                 <h1>Lector de Investigación</h1>
-                <p>Escribe tu búsqueda. Ahora verás múltiples opciones para elegir el artículo exacto, incluso si olvidas las tildes.</p>
+                <p>Escribe cualquier concepto arriba. Ahora se desplegarán tarjetas visuales completas con imágenes fijas para que selecciones exactamente lo que buscas.</p>
             </article>
 
             <!-- Atribución al final -->
@@ -222,7 +258,6 @@
     </div>
 
     <script>
-        // Lista de 60 idiomas principales para Wikipedia
         const languages = [
             { code: 'es', name: 'Español' }, { code: 'en', name: 'English' }, { code: 'fr', name: 'Français' },
             { code: 'de', name: 'Deutsch' }, { code: 'it', name: 'Italiano' }, { code: 'pt', name: 'Português' },
@@ -239,14 +274,13 @@
             { code: 'lv', name: 'Latviešu' }, { code: 'ms', name: 'Bahasa Melayu' }, { code: 'tl', name: 'Tagalog' },
             { code: 'th', name: 'ไทย' }, { code: 'ka', name: 'ქართული' }, { code: 'hy', name: 'Հայերեն' },
             { code: 'eu', name: 'Euskara' }, { code: 'gl', name: 'Galego' }, { code: 'la', name: 'Latina' },
-            { code: 'Simple', name: 'Simple English' }, { code: 'ta', name: 'தமிழ்' }, { code: 'te', name: 'తెలుగు' },
+            { code: 'Simple', name: 'Simple English' }, { code: 'ta', name: 'தமிழ்' }, { code: 'te', name: 'తెлку' },
             { code: 'ur', name: 'اردو' }, { code: 'bn', name: 'বাংলা' }, { code: 'sq', name: 'Shqip' },
             { code: 'bs', name: 'Bosanski' }, { code: 'mk', name: 'Македонски' }, { code: 'af', name: 'Afrikaans' },
             { code: 'is', name: 'Íslenska' }, { code: 'cy', name: 'Cymraeg' }, { code: 'ga', name: 'Gaeilge' },
             { code: 'sw', name: 'Kiswahili' }, { code: 'am', name: 'አማርኛ' }, { code: 'jv', name: 'Basa Jawa' }
         ];
 
-        // Cargar idiomas en el select
         const langSelect = document.getElementById('language-select');
         languages.forEach(lang => {
             const opt = document.createElement('option');
@@ -263,7 +297,7 @@
             document.documentElement.setAttribute('data-theme', newTheme);
         }
 
-        // PASO 1: Buscar sugerencias y variaciones del texto ingresado
+        // Búsqueda enriquecida con títulos, resúmenes e imágenes
         async function searchWikiOptions() {
             const query = document.getElementById('search-input').value.trim();
             const lang = langSelect.value;
@@ -273,43 +307,66 @@
             const container = document.getElementById('results-container');
             
             optionsPanel.style.display = 'block';
-            container.innerHTML = "<p>Buscando coincidencias exactas y alternativas...</p>";
+            container.innerHTML = "<p style='grid-column: 1/-1;'>Buscando alternativas visuales...</p>";
 
-            // Usamos la API de búsqueda abierta (opensearch) que tolera faltas de ortografía y tildes
-            const url = `https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
+            // Usamos la API de consulta combinada (query + generator + pageimages + extracts) para traer info visual completa
+            const url = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=6&prop=pageimages|extracts&piprop=thumbnail&pithumbsize=300&exintro&explaintext&exchars=120&exlimit=max&format=json&origin=*`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                const titles = data[1]; // Lista de títulos sugeridos
-
-                if (!titles || titles.length === 0) {
-                    container.innerHTML = "<p>No se encontraron artículos con ese nombre. Prueba otra palabra.</p>";
+                
+                if (!data.query || !data.query.pages) {
+                    container.innerHTML = "<p style='grid-column: 1/-1;'>No encontramos coincidencias claras. Intenta reescribir la palabra.</p>";
                     return;
                 }
 
+                const pages = Object.values(data.query.pages).sort((a, b) => a.index - b.index);
                 container.innerHTML = "";
-                // Crear botones para que el usuario elija el artículo correcto
-                titles.forEach(title => {
-                    const btn = document.createElement('button');
-                    btn.className = 'result-item';
-                    btn.innerText = title;
-                    btn.onclick = () => fetchArticle(title, lang);
-                    container.appendChild(btn);
+
+                pages.forEach(page => {
+                    // Crear tarjeta
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    card.onclick = () => fetchArticle(page.title, lang);
+
+                    // Imagen de portada (si existe, sino un color gris plano)
+                    const imgUrl = page.thumbnail ? page.thumbnail.source : 'https://images.unsplash.com/photo-1607434472257-d9f8e57a643d?w=300&q=80';
+                    const img = document.createElement('img');
+                    img.className = 'result-thumb';
+                    img.src = imgUrl;
+                    img.alt = page.title;
+
+                    // Textos
+                    const info = document.createElement('div');
+                    info.className = 'result-info';
+
+                    const title = document.createElement('div');
+                    title.className = 'result-title';
+                    title.innerText = page.title;
+
+                    const desc = document.createElement('div');
+                    desc.className = 'result-desc';
+                    desc.innerText = page.extract || 'Haz clic para ver este artículo completo.';
+
+                    info.appendChild(title);
+                    info.appendChild(desc);
+                    card.appendChild(img);
+                    card.appendChild(info);
+                    container.appendChild(card);
                 });
 
             } catch (e) {
-                container.innerHTML = "<p>Error de conexión al buscar sugerencias.</p>";
+                container.innerHTML = "<p style='grid-column: 1/-1;'>Error al conectar con la base de datos de imágenes.</p>";
             }
         }
 
-        // PASO 2: Cargar el artículo seleccionado por el usuario
         async function fetchArticle(title, lang) {
             const contentArea = document.getElementById('content-area');
             const optionsPanel = document.getElementById('options-panel');
             
-            optionsPanel.style.display = 'none'; // Ocultar sugerencias tras elegir
-            contentArea.innerHTML = "<p>Cargando artículo seleccionado de forma limpia...</p>";
+            optionsPanel.style.display = 'none';
+            contentArea.innerHTML = "<p>Procesando y limpiando la maqueta del artículo...</p>";
 
             const url = `https://${lang}.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text|images|displaytitle&redirects=1`;
 
@@ -331,7 +388,7 @@
                 fixImagesAndLinks(lang);
                 lucide.createIcons();
             } catch (e) {
-                contentArea.innerHTML = `<h1>Error</h1><p>No se pudo procesar el contenido de este artículo.</p>`;
+                contentArea.innerHTML = `<h1>Error</h1><p>No pudimos mapear los datos de este artículo.</p>`;
             }
         }
 
