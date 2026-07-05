@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WikiReader — Investigación Limpia</title>
-    <!-- Lucide Icons para iconos limpios -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- html2pdf para descargar PDF directamente en el cliente -->
+    <!-- html2pdf para descargar PDF directamente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -59,11 +59,13 @@
         .search-box {
             display: flex;
             gap: 10px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         input {
             flex: 1;
+            min-width: 200px;
             padding: 0.8rem 1.2rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -73,7 +75,18 @@
             outline: none;
         }
 
-        input:focus {
+        select {
+            padding: 0.8rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input:focus, select:focus {
             border-color: var(--accent-color);
         }
 
@@ -90,13 +103,33 @@
             gap: 8px;
         }
 
-        button:hover {
-            opacity: 0.9;
+        button:hover { opacity: 0.9; }
+        .secondary-btn { background: var(--border-color); color: var(--text-color); }
+
+        /* Lista de resultados encontrados sugeridos */
+        .results-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 2rem;
+            background: rgba(0,0,0,0.02);
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px dashed var(--border-color);
         }
 
-        .secondary-btn {
-            background: var(--border-color);
-            color: var(--text-color);
+        .result-item {
+            padding: 0.8rem 1.2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .result-item:hover {
+            border-color: var(--accent-color);
+            background: rgba(0, 113, 227, 0.05);
         }
 
         .toolbar {
@@ -106,27 +139,10 @@
             flex-wrap: wrap;
         }
 
-        .article-area {
-            line-height: 1.7;
-            font-size: 1.15rem;
-        }
-
-        .article-area h1 {
-            font-size: 2.6rem;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-
-        .article-area h2 {
-            font-size: 1.8rem;
-            margin: 2rem 0 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.3rem;
-        }
-
-        .article-area p {
-            margin-bottom: 1.4rem;
-        }
+        .article-area { line-height: 1.7; font-size: 1.15rem; }
+        .article-area h1 { font-size: 2.6rem; margin-bottom: 1.5rem; font-weight: 700; }
+        .article-area h2 { font-size: 1.8rem; margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem; }
+        .article-area p { margin-bottom: 1.4rem; }
 
         .wiki-img-container {
             display: flex;
@@ -138,82 +154,30 @@
             border-radius: 14px;
         }
 
-        .article-area img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+        .article-area img { max-width: 100%; height: auto; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .highlighted { background-color: #ffeb3b; color: #000; border-radius: 3px; padding: 0 2px; }
+        .welcome-notice { background: rgba(0, 0, 0, 0.02); border-left: 4px solid var(--accent-color); padding: 1.5rem; border-radius: 0 12px 12px 0; margin-bottom: 2rem; font-size: 0.95rem; }
+        
+        .attribution-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); font-size: 0.95rem; color: #6e6e73; text-align: center; }
+        .attribution-footer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
 
-        .highlighted {
-            background-color: #ffeb3b;
-            color: #000;
-            border-radius: 3px;
-            padding: 0 2px;
-        }
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .lightbox img { max-width: 90%; max-height: 90%; border-radius: 12px; object-fit: contain; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; cursor: pointer; }
 
-        .welcome-notice {
-            background: rgba(0, 0, 0, 0.02);
-            border-left: 4px solid var(--accent-color);
-            padding: 1.5rem;
-            border-radius: 0 12px 12px 0;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        [data-theme="dark"] .welcome-notice {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .attribution-footer {
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.95rem;
-            color: #6e6e73;
-            text-align: center;
-        }
-
-        .attribution-footer a {
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .lightbox {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .lightbox img {
-            max-width: 90%; max-height: 90%;
-            border-radius: 12px; object-fit: contain;
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px; right: 20px; color: white; cursor: pointer;
-        }
-
-        /* Ocultar elementos innecesarios */
-        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint, .mw-references-wrap, .redirectMsg {
-            display: none !important;
-        }
+        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint, .mw-references-wrap { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="glass-panel">
-        <!-- Buscador -->
+        <!-- Buscador e Idiomas -->
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Busca cualquier tema en Wikipedia..." value="Jamón">
-            <button onclick="searchWiki()"><i data-lucide="search"></i> Buscar</button>
+            <select id="language-select">
+                <!-- Se inyectarán los 60 idiomas vía JS para mantener el código limpio -->
+            </select>
+            <input type="text" id="search-input" placeholder="Busca cualquier término..." value="Limon">
+            <button onclick="searchWikiOptions()"><i data-lucide="search"></i> Buscar</button>
             <button class="secondary-btn" onclick="toggleTheme()"><i data-lucide="moon"></i></button>
         </div>
 
@@ -222,6 +186,12 @@
             <strong>Nota del Desarrollador:</strong> Esta plataforma web está desarrollada utilizando la API oficial y las funciones públicas de 
             <a href="https://www.wikipedia.org" target="_blank" style="color: var(--accent-color); font-weight:600; text-decoration:none;">Wikipedia™</a>. 
             Este proyecto <strong>no está financiado, no recibe donaciones y no genera ningún tipo de ingresos</strong>. Ha sido creado únicamente por amor al diseño, con el objetivo de ofrecer a los usuarios una interfaz mucho más limpia, moderna, cómoda y optimizada para la lectura y la investigación personal sin distracciones.
+        </div>
+
+        <!-- Panel de Elección de Artículos -->
+        <div id="options-panel" style="display: none; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem; opacity: 0.8;">Artículos encontrados. Elige cuál deseas leer:</h3>
+            <div id="results-container" class="results-list"></div>
         </div>
 
         <!-- Barra de herramientas -->
@@ -235,10 +205,10 @@
         <div id="capture-zone" style="background: transparent; padding: 10px;">
             <article class="article-area" id="content-area">
                 <h1>Lector de Investigación</h1>
-                <p>Escribe tu tema de investigación en la barra superior.</p>
+                <p>Escribe tu búsqueda. Ahora verás múltiples opciones para elegir el artículo exacto, incluso si olvidas las tildes.</p>
             </article>
 
-            <!-- Atribución Dinámica al final -->
+            <!-- Atribución al final -->
             <div class="attribution-footer" id="article-attribution" style="display: none;">
                 Contenido: <span id="article-title-placeholder" style="font-weight: 600;">[Artículo]</span> encontrado en <a id="wikipedia-direct-link" href="https://www.wikipedia.org" target="_blank">Wikipedia™</a>
             </div>
@@ -248,10 +218,43 @@
     <!-- Lightbox de Imágenes -->
     <div class="lightbox" id="lightbox" onclick="closeLightbox()">
         <div class="lightbox-close"><i data-lucide="x" size="36"></i></div>
-        <img id="lightbox-img" src="" alt="Cargando recurso...">
+        <img id="lightbox-img" src="">
     </div>
 
     <script>
+        // Lista de 60 idiomas principales para Wikipedia
+        const languages = [
+            { code: 'es', name: 'Español' }, { code: 'en', name: 'English' }, { code: 'fr', name: 'Français' },
+            { code: 'de', name: 'Deutsch' }, { code: 'it', name: 'Italiano' }, { code: 'pt', name: 'Português' },
+            { code: 'ja', name: '日本語' }, { code: 'ru', name: 'Русский' }, { code: 'zh', name: '中文' },
+            { code: 'ar', name: 'العربية' }, { code: 'nl', name: 'Nederlands' }, { code: 'pl', name: 'Polski' },
+            { code: 'uk', name: 'Українська' }, { code: 'vi', name: 'Tiếng Việt' }, { code: 'sv', name: 'Svenska' },
+            { code: 'ko', name: '한국어' }, { code: 'ca', name: 'Català' }, { code: 'no', name: 'Norsk' },
+            { code: 'fi', name: 'Suomi' }, { code: 'cs', name: 'Čeština' }, { code: 'hu', name: 'Magyar' },
+            { code: 'tr', name: 'Türkçe' }, { code: 'ro', name: 'Română' }, { code: 'id', name: 'Bahasa Indonesia' },
+            { code: 'he', name: 'עברית' }, { code: 'hi', name: 'हिन्दी' }, { code: 'fa', name: 'فارسی' },
+            { code: 'el', name: 'Ελληνικά' }, { code: 'da', name: 'Dansk' }, { code: 'bg', name: 'Български' },
+            { code: 'sr', name: 'Српски' }, { code: 'sk', name: 'Slovenčina' }, { code: 'sl', name: 'Slovenščina' },
+            { code: 'et', name: 'Eesti' }, { code: 'hr', name: 'Hrvatski' }, { code: 'lt', name: 'Lietuvių' },
+            { code: 'lv', name: 'Latviešu' }, { code: 'ms', name: 'Bahasa Melayu' }, { code: 'tl', name: 'Tagalog' },
+            { code: 'th', name: 'ไทย' }, { code: 'ka', name: 'ქართული' }, { code: 'hy', name: 'Հայերեն' },
+            { code: 'eu', name: 'Euskara' }, { code: 'gl', name: 'Galego' }, { code: 'la', name: 'Latina' },
+            { code: 'Simple', name: 'Simple English' }, { code: 'ta', name: 'தமிழ்' }, { code: 'te', name: 'తెలుగు' },
+            { code: 'ur', name: 'اردو' }, { code: 'bn', name: 'বাংলা' }, { code: 'sq', name: 'Shqip' },
+            { code: 'bs', name: 'Bosanski' }, { code: 'mk', name: 'Македонски' }, { code: 'af', name: 'Afrikaans' },
+            { code: 'is', name: 'Íslenska' }, { code: 'cy', name: 'Cymraeg' }, { code: 'ga', name: 'Gaeilge' },
+            { code: 'sw', name: 'Kiswahili' }, { code: 'am', name: 'አማርኛ' }, { code: 'jv', name: 'Basa Jawa' }
+        ];
+
+        // Cargar idiomas en el select
+        const langSelect = document.getElementById('language-select');
+        languages.forEach(lang => {
+            const opt = document.createElement('option');
+            opt.value = lang.code;
+            opt.innerText = lang.name;
+            langSelect.appendChild(opt);
+        });
+
         lucide.createIcons();
 
         function toggleTheme() {
@@ -260,40 +263,79 @@
             document.documentElement.setAttribute('data-theme', newTheme);
         }
 
-        async function searchWiki() {
+        // PASO 1: Buscar sugerencias y variaciones del texto ingresado
+        async function searchWikiOptions() {
             const query = document.getElementById('search-input').value.trim();
+            const lang = langSelect.value;
             if (!query) return;
 
-            const contentArea = document.getElementById('content-area');
-            contentArea.innerHTML = "<p>Filtrando contenido y cargando imágenes limpias...</p>";
+            const optionsPanel = document.getElementById('options-panel');
+            const container = document.getElementById('results-container');
             
-            // AGREGADO: &redirects=1 para resolver automáticamente páginas de redirección
-            const url = `https://es.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(query)}&format=json&origin=*&prop=text|images|displaytitle&redirects=1`;
+            optionsPanel.style.display = 'block';
+            container.innerHTML = "<p>Buscando coincidencias exactas y alternativas...</p>";
+
+            // Usamos la API de búsqueda abierta (opensearch) que tolera faltas de ortografía y tildes
+            const url = `https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=6&namespace=0&format=json&origin=*`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                if (data.error) throw new Error();
+                const titles = data[1]; // Lista de títulos sugeridos
 
-                let htmlContent = data.parse.text['*'];
-                const title = data.parse.title;
+                if (!titles || titles.length === 0) {
+                    container.innerHTML = "<p>No se encontraron artículos con ese nombre. Prueba otra palabra.</p>";
+                    return;
+                }
 
-                document.getElementById('welcome-box').style.display = 'none';
-                contentArea.innerHTML = `<h1>${title}</h1>` + htmlContent;
-                
-                document.getElementById('toolbar').style.display = 'flex';
-                document.getElementById('article-attribution').style.display = 'block';
-                document.getElementById('article-title-placeholder').innerText = `"${title}"`;
-                document.getElementById('wikipedia-direct-link').href = `https://es.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+                container.innerHTML = "";
+                // Crear botones para que el usuario elija el artículo correcto
+                titles.forEach(title => {
+                    const btn = document.createElement('button');
+                    btn.className = 'result-item';
+                    btn.innerText = title;
+                    btn.onclick = () => fetchArticle(title, lang);
+                    container.appendChild(btn);
+                });
 
-                fixImagesAndLinks();
-                lucide.createIcons();
             } catch (e) {
-                contentArea.innerHTML = `<h1>No encontrado</h1><p>Revisa que el término exista en Wikipedia en español.</p>`;
+                container.innerHTML = "<p>Error de conexión al buscar sugerencias.</p>";
             }
         }
 
-        function fixImagesAndLinks() {
+        // PASO 2: Cargar el artículo seleccionado por el usuario
+        async function fetchArticle(title, lang) {
+            const contentArea = document.getElementById('content-area');
+            const optionsPanel = document.getElementById('options-panel');
+            
+            optionsPanel.style.display = 'none'; // Ocultar sugerencias tras elegir
+            contentArea.innerHTML = "<p>Cargando artículo seleccionado de forma limpia...</p>";
+
+            const url = `https://${lang}.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text|images|displaytitle&redirects=1`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let htmlContent = data.parse.text['*'];
+                const realTitle = data.parse.title;
+
+                document.getElementById('welcome-box').style.display = 'none';
+                contentArea.innerHTML = `<h1>${realTitle}</h1>` + htmlContent;
+                
+                document.getElementById('toolbar').style.display = 'flex';
+                document.getElementById('article-attribution').style.display = 'block';
+                document.getElementById('article-title-placeholder').innerText = `"${realTitle}"`;
+                document.getElementById('wikipedia-direct-link').href = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(realTitle)}`;
+
+                fixImagesAndLinks(lang);
+                lucide.createIcons();
+            } catch (e) {
+                contentArea.innerHTML = `<h1>Error</h1><p>No se pudo procesar el contenido de este artículo.</p>`;
+            }
+        }
+
+        function fixImagesAndLinks(lang) {
             const images = document.querySelectorAll('#content-area img');
             images.forEach(img => {
                 let src = img.getAttribute('src');
@@ -328,7 +370,7 @@
 
         function copyText() {
             navigator.clipboard.writeText(document.getElementById('content-area').innerText).then(() => {
-                alert('¡Texto plano copiado!');
+                alert('¡Texto copiado al portapapeles!');
             });
         }
 
@@ -346,7 +388,7 @@
             const element = document.getElementById('capture-zone');
             const opt = {
                 margin:       15,
-                filename:     'investigacion-wikipedia.pdf',
+                filename:     'investigacion.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
