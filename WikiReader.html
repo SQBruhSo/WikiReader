@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiReader — Investigación Limpia</title>
+    <!-- Lucide Icons para los iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --text-color: #1d1d1f;
+            --accent-color: #0071e3;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --blur-amount: 20px;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.75);
+            --text-color: #f5f5f7;
+            --accent-color: #0a84ff;
+            --border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 850px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .secondary-btn {
+            background: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Área de contenido del artículo */
+        .article-area {
+            line-height: 1.7;
+            font-size: 1.15rem;
+        }
+
+        .article-area h1 {
+            font-size: 2.6rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .article-area h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3rem;
+        }
+
+        .article-area p {
+            margin-bottom: 1.4rem;
+            text-align: justify;
+        }
+
+        /* Contenedor de imágenes corregido */
+        .wiki-img-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2rem 0;
+            background: rgba(0,0,0,0.02);
+            padding: 10px;
+            border-radius: 14px;
+        }
+
+        .article-area img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .article-area img:hover {
+            transform: scale(1.01);
+        }
+
+        .highlighted {
+            background-color: #ffeb3b;
+            color: #000;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        /* Mensaje inicial de Bienvenida y Disclaimer */
+        .welcome-notice {
+            background: rgba(0, 0, 0, 0.02);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        [data-theme="dark"] .welcome-notice {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Nota fija de Wikipedia al pie del documento */
+        .attribution-footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            color: #6e6e73;
+            text-align: center;
+        }
+
+        .attribution-footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .attribution-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Lightbox para imágenes */
+        .lightbox {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px; right: 20px;
+            color: white; cursor: pointer;
+        }
+
+        /* Ocultar elementos de Wikipedia basura */
+        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint {
+            display: none !important;
+        }
+
+        /* ESTILOS DE IMPRESIÓN REFORZADOS (OPTIMIZADO PARA GUARDAR COMO PDF) */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .glass-panel {
+                border: none !important;
+                box-shadow: none !important;
+                background: white !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            .search-box, .toolbar, .lightbox, .welcome-notice {
+                display: none !important;
+            }
+            .article-area {
+                font-size: 12pt !important;
+            }
+            /* Encabezado/Pie de página forzado para todas las hojas del PDF */
+            .attribution-footer {
+                display: block !important;
+                position: relative;
+                bottom: 0;
+                page-break-after: avoid;
+                margin-top: 5rem;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel">
+        <!-- Buscador Superior -->
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Busca un tema (Ej: Universo, Historia, León)..." value="Universo">
+            <button onclick="searchWiki()"><i data-lucide="search"></i> Buscar</button>
+            <button class="secondary-btn" onclick="toggleTheme()"><i data-lucide="moon"></i></button>
+        </div>
+
+        <!-- Mensaje de inicio / Exención de Responsabilidad -->
+        <div id="welcome-box" class="welcome-notice">
+            <strong>Nota del Desarrollador:</strong> Esta plataforma web está desarrollada utilizando la API oficial y las funciones públicas de 
+            <a href="https://www.wikipedia.org" target="_blank" style="color: var(--accent-color); font-weight:600; text-decoration:none;">Wikipedia™</a>. 
+            Este proyecto <strong>no está financiado, no recibe donaciones y no genera ningún tipo de ingresos</strong>. Ha sido creado únicamente por amor al diseño, con el objetivo de ofrecer a los usuarios una interfaz mucho más limpia, moderna, cómoda y optimizada para la lectura y la investigación personal sin distracciones.
+        </div>
+
+        <!-- Barra de Herramientas Inteligente -->
+        <div class="toolbar" id="toolbar" style="display: none;">
+            <button class="secondary-btn" onclick="copyText()"><i data-lucide="copy"></i> Copiar Texto</button>
+            <button class="secondary-btn" onclick="highlightSelection()"><i data-lucide="highlighter"></i> Subrayar Texto</button>
+            <button class="secondary-btn" onclick="exportAsPDF()"><i data-lucide="file-text"></i> Guardar como PDF</button>
+        </div>
+
+        <!-- Contenedor Principal de la Información -->
+        <div id="capture-zone">
+            <article class="article-area" id="content-area">
+                <h1>Lector de Investigación</h1>
+                <p>Escribe cualquier término o artículo en la barra de búsqueda superior para comenzar a estudiar de forma cómoda.</p>
+            </article>
+
+            <!-- Nota de atribución Dinámica obligatoria al final -->
+            <div class="attribution-footer" id="article-attribution" style="display: none;">
+                Contenido: <span id="article-title-placeholder" style="font-weight: 600;">[Artículo]</span> encontrado en <a id="wikipedia-direct-link" href="https://www.wikipedia.org" target="_blank">Wikipedia™</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Galería Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <div class="lightbox-close"><i data-lucide="x" size="36"></i></div>
+        <img id="lightbox-img" src="" alt="Imagen ampliada">
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+        }
+
+        // Sistema de búsqueda mejorado que procesa imágenes correctamente libres de CORS
+        async function searchWiki() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = "<p>Conectando con servidores de Wikipedia y optimizando imágenes...</p>";
+            
+            // Usamos el endpoint parse de la API oficial en español
+            const url = `https://es.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(query)}&format=json&origin=*&prop=text|images|displaytitle`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) throw new Error('Artículo no encontrado');
+
+                let htmlContent = data.parse.text['*'];
+                const title = data.parse.title;
+
+                // Ocultar mensaje de bienvenida una vez se busca algo
+                document.getElementById('welcome-box').style.display = 'none';
+
+                // Inyectar el cuerpo del texto de Wikipedia
+                contentArea.innerHTML = `<h1>${title}</h1>` + htmlContent;
+                
+                // Mostrar herramientas y pie de atribución legal
+                document.getElementById('toolbar').style.display = 'flex';
+                document.getElementById('article-attribution').style.display = 'block';
+                document.getElementById('article-title-placeholder').innerText = `"${title}"`;
+                document.getElementById('wikipedia-direct-link').href = `https://es.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+
+                // Corregir y forzar las rutas de las imágenes para que carguen de forma nativa
+                fixAndSetupImages();
+                lucide.createIcons();
+
+            } catch (error) {
+                contentArea.innerHTML = `<h1>Artículo no encontrado</h1><p>Por favor, comprueba que el término esté bien escrito en español e inténtalo de nuevo.</p>`;
+                document.getElementById('toolbar').style.display = 'none';
+                document.getElementById('article-attribution').style.display = 'none';
+            }
+        }
+
+        // Corrige las URLs relativas de las imágenes de la API y añade la función para ampliarlas
+        function fixAndSetupImages() {
+            const images = document.querySelectorAll('#content-area img');
+            images.forEach(img => {
+                let src = img.getAttribute('src');
+                
+                if (src) {
+                    // Si la URL empieza con //, le añadimos https:
+                    if (src.startsWith('//')) {
+                        img.src = 'https:' + src;
+                    } 
+                    // Si es una ruta interna relativa, apuntamos al servidor de subida de Wikipedia
+                    else if (src.startsWith('/')) {
+                        img.src = 'https://upload.wikimedia.org' + src;
+                    }
+                }
+
+                // Envolver la imagen en un contenedor para darle mejor aspecto visual
+                const wrapper = document.createElement('div');
+                wrapper.className = 'wiki-img-container';
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+
+                // Evento para abrir en el visualizador gigante
+                img.addEventListener('click', () => {
+                    document.getElementById('lightbox-img').src = img.src;
+                    document.getElementById('lightbox').style.display = 'flex';
+                });
+            });
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        // Copiar texto plano del artículo
+        function copyText() {
+            const text = document.getElementById('content-area').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('¡Texto copiado correctamente al portapapeles!');
+            });
+        }
+
+        // Subrayar selección de texto
+        function highlightSelection() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) {
+                alert('Primero selecciona un fragmento de texto con tu ratón.');
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const span = document.createElement('span');
+            span.className = 'highlighted';
+            
+            try {
+                range.surroundContents(span);
+            } catch (e) {
+                alert('Por favor, selecciona texto que pertenezca al mismo párrafo.');
+            }
+            selection.removeAllRanges();
+        }
+
+        // Exportar a PDF de forma nativa manteniendo el aviso legal en el documento
+        function exportAsPDF() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
