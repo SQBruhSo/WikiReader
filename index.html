@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WikiReader — Investigación Limpia</title>
-    <!-- Lucide Icons para los iconos limpios -->
+    <!-- Lucide Icons para iconos limpios -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- html2pdf para descargar el PDF directamente sin fallos de Actions -->
+    <!-- html2pdf para descargar PDF directamente en el cliente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -201,7 +201,8 @@
             top: 20px; right: 20px; color: white; cursor: pointer;
         }
 
-        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint {
+        /* Limpieza de interfaces molestas de Wikipedia */
+        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint, .mw-references-wrap {
             display: none !important;
         }
     </style>
@@ -211,46 +212,47 @@
     <div class="glass-panel">
         <!-- Buscador -->
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Busca un tema en Wikipedia..." value="Universo">
+            <input type="text" id="search-input" placeholder="Busca cualquier tema en Wikipedia..." value="Universo">
             <button onclick="searchWiki()"><i data-lucide="search"></i> Buscar</button>
             <button class="secondary-btn" onclick="toggleTheme()"><i data-lucide="moon"></i></button>
         </div>
 
-        <!-- Mensaje de inicio Requerido -->
+        <!-- Nota Obligatoria del Inicio -->
         <div id="welcome-box" class="welcome-notice">
             <strong>Nota del Desarrollador:</strong> Esta plataforma web está desarrollada utilizando la API oficial y las funciones públicas de 
             <a href="https://www.wikipedia.org" target="_blank" style="color: var(--accent-color); font-weight:600; text-decoration:none;">Wikipedia™</a>. 
             Este proyecto <strong>no está financiado, no recibe donaciones y no genera ningún tipo de ingresos</strong>. Ha sido creado únicamente por amor al diseño, con el objetivo de ofrecer a los usuarios una interfaz mucho más limpia, moderna, cómoda y optimizada para la lectura y la investigación personal sin distracciones.
         </div>
 
-        <!-- Barra de funciones -->
+        <!-- Barra de herramientas flotante -->
         <div class="toolbar" id="toolbar" style="display: none;">
             <button class="secondary-btn" onclick="copyText()"><i data-lucide="copy"></i> Copiar Texto</button>
             <button class="secondary-btn" onclick="highlightSelection()"><i data-lucide="highlighter"></i> Subrayar Texto</button>
             <button class="secondary-btn" onclick="exportAsPDF()"><i data-lucide="file-text"></i> Guardar como PDF</button>
         </div>
 
-        <!-- Zona de captura limpia para PDF -->
+        <!-- Zona Limpia de Lectura -->
         <div id="capture-zone" style="background: transparent; padding: 10px;">
             <article class="article-area" id="content-area">
                 <h1>Lector de Investigación</h1>
-                <p>Escribe cualquier término arriba para transformar Wikipedia en una interfaz prémium.</p>
+                <p>Escribe tu tema de investigación en la barra superior.</p>
             </article>
 
-            <!-- Atribución al final de los artículos -->
+            <!-- Atribución Dinámica al final del artículo -->
             <div class="attribution-footer" id="article-attribution" style="display: none;">
                 Contenido: <span id="article-title-placeholder" style="font-weight: 600;">[Artículo]</span> encontrado en <a id="wikipedia-direct-link" href="https://www.wikipedia.org" target="_blank">Wikipedia™</a>
             </div>
         </div>
     </div>
 
-    <!-- Visor de imágenes -->
+    <!-- Lightbox de Imágenes -->
     <div class="lightbox" id="lightbox" onclick="closeLightbox()">
         <div class="lightbox-close"><i data-lucide="x" size="36"></i></div>
-        <img id="lightbox-img" src="">
+        <img id="lightbox-img" src="" alt="Cargando recurso...">
     </div>
 
     <script>
+        // Inicializar iconos de Lucide
         lucide.createIcons();
 
         function toggleTheme() {
@@ -259,13 +261,15 @@
             document.documentElement.setAttribute('data-theme', newTheme);
         }
 
+        // Motor de búsqueda limpio usando JSONP nativo (Evita bloqueos CORS de imágenes)
         async function searchWiki() {
             const query = document.getElementById('search-input').value.trim();
             if (!query) return;
 
             const contentArea = document.getElementById('content-area');
-            contentArea.innerHTML = "<p>Cargando artículo limpio e imágenes sin errores...</p>";
+            contentArea.innerHTML = "<p>Filtrando contenido y cargando imágenes limpias...</p>";
             
+            // Endpoint optimizado compatible con hosting estático plano
             const url = `https://es.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(query)}&format=json&origin=*&prop=text|images|displaytitle`;
 
             try {
@@ -284,14 +288,15 @@
                 document.getElementById('article-title-placeholder').innerText = `"${title}"`;
                 document.getElementById('wikipedia-direct-link').href = `https://es.wikipedia.org/wiki/${encodeURIComponent(title)}`;
 
-                fixImages();
+                fixImagesAndLinks();
                 lucide.createIcons();
             } catch (e) {
-                contentArea.innerHTML = `<h1>No encontrado</h1><p>Revisa la ortografía e intenta de nuevo.</p>`;
+                contentArea.innerHTML = `<h1>No encontrado</h1><p>Revisa que el término exista en Wikipedia en español.</p>`;
             }
         }
 
-        function fixImages() {
+        // Forzar a los recursos de imágenes y links a apuntar a servidores externos reales sin romper el hosting
+        function fixImagesAndLinks() {
             const images = document.querySelectorAll('#content-area img');
             images.forEach(img => {
                 let src = img.getAttribute('src');
@@ -299,10 +304,28 @@
                     if (src.startsWith('//')) img.src = 'https:' + src;
                     else if (src.startsWith('/')) img.src = 'https://upload.wikimedia.org' + src;
                 }
+                
+                // Envoltura visual estilizada
+                const wrapper = document.createElement('div');
+                wrapper.className = 'wiki-img-container';
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+
                 img.addEventListener('click', () => {
                     document.getElementById('lightbox-img').src = img.src;
                     document.getElementById('lightbox').style.display = 'flex';
                 });
+            });
+
+            // Evitar que los enlaces internos de Wikipedia rompan nuestra app
+            const links = document.querySelectorAll('#content-area a');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if(href && href.startsWith('/wiki/')) {
+                    link.removeAttribute('href'); // Desactivar navegación rota interna
+                    link.style.color = 'inherit';
+                    link.style.cursor = 'default';
+                }
             });
         }
 
@@ -310,7 +333,7 @@
 
         function copyText() {
             navigator.clipboard.writeText(document.getElementById('content-area').innerText).then(() => {
-                alert('¡Texto copiado!');
+                alert('¡Texto plano copiado al portapapeles!');
             });
         }
 
@@ -324,14 +347,14 @@
             selection.removeAllRanges();
         }
 
-        // Descarga directa a PDF sin usar la ventana de impresión compleja
+        // Renderizado directo a PDF incluyendo siempre el pie de página obligatorio de procedencia
         function exportAsPDF() {
             const element = document.getElementById('capture-zone');
             const opt = {
-                margin:       10,
-                filename:     'articulo-wikipedia.pdf',
+                margin:       15,
+                filename:     'investigacion-wikipedia.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             html2pdf().set(opt).from(element).save();
