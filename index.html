@@ -201,8 +201,8 @@
             top: 20px; right: 20px; color: white; cursor: pointer;
         }
 
-        /* Limpieza de interfaces molestas de Wikipedia */
-        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint, .mw-references-wrap {
+        /* Ocultar elementos innecesarios */
+        .mw-editsection, .infobox, .navbox, .ambox, .metadata, .noprint, .mw-references-wrap, .redirectMsg {
             display: none !important;
         }
     </style>
@@ -212,33 +212,33 @@
     <div class="glass-panel">
         <!-- Buscador -->
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Busca cualquier tema en Wikipedia..." value="Universo">
+            <input type="text" id="search-input" placeholder="Busca cualquier tema en Wikipedia..." value="Jamón">
             <button onclick="searchWiki()"><i data-lucide="search"></i> Buscar</button>
             <button class="secondary-btn" onclick="toggleTheme()"><i data-lucide="moon"></i></button>
         </div>
 
-        <!-- Nota Obligatoria del Inicio -->
+        <!-- Mensaje de inicio -->
         <div id="welcome-box" class="welcome-notice">
             <strong>Nota del Desarrollador:</strong> Esta plataforma web está desarrollada utilizando la API oficial y las funciones públicas de 
             <a href="https://www.wikipedia.org" target="_blank" style="color: var(--accent-color); font-weight:600; text-decoration:none;">Wikipedia™</a>. 
             Este proyecto <strong>no está financiado, no recibe donaciones y no genera ningún tipo de ingresos</strong>. Ha sido creado únicamente por amor al diseño, con el objetivo de ofrecer a los usuarios una interfaz mucho más limpia, moderna, cómoda y optimizada para la lectura y la investigación personal sin distracciones.
         </div>
 
-        <!-- Barra de herramientas flotante -->
+        <!-- Barra de herramientas -->
         <div class="toolbar" id="toolbar" style="display: none;">
             <button class="secondary-btn" onclick="copyText()"><i data-lucide="copy"></i> Copiar Texto</button>
             <button class="secondary-btn" onclick="highlightSelection()"><i data-lucide="highlighter"></i> Subrayar Texto</button>
             <button class="secondary-btn" onclick="exportAsPDF()"><i data-lucide="file-text"></i> Guardar como PDF</button>
         </div>
 
-        <!-- Zona Limpia de Lectura -->
+        <!-- Zona de Lectura -->
         <div id="capture-zone" style="background: transparent; padding: 10px;">
             <article class="article-area" id="content-area">
                 <h1>Lector de Investigación</h1>
                 <p>Escribe tu tema de investigación en la barra superior.</p>
             </article>
 
-            <!-- Atribución Dinámica al final del artículo -->
+            <!-- Atribución Dinámica al final -->
             <div class="attribution-footer" id="article-attribution" style="display: none;">
                 Contenido: <span id="article-title-placeholder" style="font-weight: 600;">[Artículo]</span> encontrado en <a id="wikipedia-direct-link" href="https://www.wikipedia.org" target="_blank">Wikipedia™</a>
             </div>
@@ -252,7 +252,6 @@
     </div>
 
     <script>
-        // Inicializar iconos de Lucide
         lucide.createIcons();
 
         function toggleTheme() {
@@ -261,7 +260,6 @@
             document.documentElement.setAttribute('data-theme', newTheme);
         }
 
-        // Motor de búsqueda limpio usando JSONP nativo (Evita bloqueos CORS de imágenes)
         async function searchWiki() {
             const query = document.getElementById('search-input').value.trim();
             if (!query) return;
@@ -269,8 +267,8 @@
             const contentArea = document.getElementById('content-area');
             contentArea.innerHTML = "<p>Filtrando contenido y cargando imágenes limpias...</p>";
             
-            // Endpoint optimizado compatible con hosting estático plano
-            const url = `https://es.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(query)}&format=json&origin=*&prop=text|images|displaytitle`;
+            // AGREGADO: &redirects=1 para resolver automáticamente páginas de redirección
+            const url = `https://es.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(query)}&format=json&origin=*&prop=text|images|displaytitle&redirects=1`;
 
             try {
                 const response = await fetch(url);
@@ -295,7 +293,6 @@
             }
         }
 
-        // Forzar a los recursos de imágenes y links a apuntar a servidores externos reales sin romper el hosting
         function fixImagesAndLinks() {
             const images = document.querySelectorAll('#content-area img');
             images.forEach(img => {
@@ -305,7 +302,6 @@
                     else if (src.startsWith('/')) img.src = 'https://upload.wikimedia.org' + src;
                 }
                 
-                // Envoltura visual estilizada
                 const wrapper = document.createElement('div');
                 wrapper.className = 'wiki-img-container';
                 img.parentNode.insertBefore(wrapper, img);
@@ -317,12 +313,11 @@
                 });
             });
 
-            // Evitar que los enlaces internos de Wikipedia rompan nuestra app
             const links = document.querySelectorAll('#content-area a');
             links.forEach(link => {
                 const href = link.getAttribute('href');
                 if(href && href.startsWith('/wiki/')) {
-                    link.removeAttribute('href'); // Desactivar navegación rota interna
+                    link.removeAttribute('href');
                     link.style.color = 'inherit';
                     link.style.cursor = 'default';
                 }
@@ -333,7 +328,7 @@
 
         function copyText() {
             navigator.clipboard.writeText(document.getElementById('content-area').innerText).then(() => {
-                alert('¡Texto plano copiado al portapapeles!');
+                alert('¡Texto plano copiado!');
             });
         }
 
@@ -347,7 +342,6 @@
             selection.removeAllRanges();
         }
 
-        // Renderizado directo a PDF incluyendo siempre el pie de página obligatorio de procedencia
         function exportAsPDF() {
             const element = document.getElementById('capture-zone');
             const opt = {
